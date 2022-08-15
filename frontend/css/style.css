@@ -1,0 +1,46 @@
+body {
+    background-color: rgb(190, 215, 238);
+    padding: 30px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h1 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 40px;
+}
+
+#tools {
+    margin-bottom: 20px;
+}
+
+#result {
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.item {
+    background-color: lightgoldenrodyellow;
+    border: 2px solid rgb(93, 68, 40);
+    border-radius: 23px;
+    padding: 10px;
+    text-align: center;
+}
+
+h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 30px;
+    margin: 15px 0 15px 0;
+}
+
+p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 20px;
+    margin: 0 0 15px 0;
+}
+
+img {
+    border-radius: 0 0 20px 20px;
+}
