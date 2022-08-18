@@ -1,6 +1,10 @@
 // NOTE: REMEMBER TO CTRL+C THE TERMINAL TO END THE SERVER EACH DAY
 
-// Setting up our dependencies
+
+
+// SETTING UP THE DEPENDENCIES --------------------------------------------------------------------
+
+
 // The packages that we install in the terminal go into package.json and the dependencies of those packages will show up in package-lock.json
 
 const express = require('express');
@@ -11,15 +15,21 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 // This is our middleware for talking to MongoDB
 const mongoose = require('mongoose');
+// bcrypt for encrypting data (passwords)
+const bcrypt = require('bcryptjs');
 
 // Grab our config file (username and password)
 const config = require('./config.json');
-console.log(config);
+
+
+
+// SCHEMA AND STARTING DEPENDENCIES ---------------------------------------------------------------
 
 // Schemas (Setting up the structure of the data, rules.)
 // Every Scheme needs a capital letter
 // Telling it where our model is
 const Coffee = require('./models/coffee.js');
+const User = require('./models/user.js');
 
 // Start our dependencies
 // Body parser will run our JSON through the front end
@@ -47,9 +57,11 @@ mongoose.connect(
 }).catch((err) => {
     // Catch is used to return any errors
     console.log(`DB connection error ${err}`);
-})
+});
 
-// const addCoffeeButton = getElementById('add-coffee');
+
+
+// ADD COFFEE METHOD -----------------------------------------------------------------------------
 
 // Setting up a route/endpoint which the frontend will feed through
 // app.post will send data to the database
@@ -75,6 +87,10 @@ app.post('/addCoffee', (req, res) => {
         });
 });
 
+
+
+// FIND COFFEE METHOD ----------------------------------------------------------------------------
+
 // Grab coffee from Mongo DB
 // Here, we're setting up the allCoffee route that we add onto localhost:<port>
 app.get('/allCoffee', (req, res) => {
@@ -87,3 +103,101 @@ app.get('/allCoffee', (req, res) => {
             res.send(result)
         })
 })
+
+
+
+// DELETE COFFEE METHOD -------------------------------------------------------------------------
+
+// Setting up the delete route
+// This route will be activated when used in an ajax, etc.
+app.delete('/deleteCoffee/:id', (req, res) => {
+    // The request variable here contains the ID and you can access it using req.params.id
+    const coffeeID = req.params.id;
+    // findById looks up a piece of data based on the id argument which we give to it first (coffeeID)
+    // If it's successful, it will run a function that provides the details for that coffee (represented by the word "coffee" after "err")
+    Coffee.findById(coffeeID, (err, coffeeData) => {
+        if (err) {
+            console.log(err);
+        } else {
+            Coffee.deleteOne({ _id: coffeeID })
+                .then(() => {
+                    console.log("Success! Actually deleted from Mongo DB");
+                    // res.send will end the process
+                    res.send(coffeeData);
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        }
+    });
+});
+
+
+// EDIT METHOD -------------------------------------------------------------------------------
+
+app.patch('/updateProduct/:id', (req, res) => {
+    // req changes the parameter on frontend
+    const idParam = req.params.id;
+    Coffee.findById(idParam, (err, coffee) => {
+        // const for all the data we're expected
+        const updatedProduct = {
+            name: req.body.name,
+            price: req.body.price,
+            image_url: req.body.image_url
+        }
+        Coffee.updateOne({
+            _id: idParam
+        }, updatedProduct)
+            .then(result => {
+                res.send(result);
+            })
+            .catch(err => result.send(err))
+    })
+});
+
+
+// USER REGISTER -----------------------------------------------------------------------------
+
+// Registering a new user on MongoDB
+
+app.post('/registerUser', (req, res) => { // Checking if user is in the DB already
+
+    User.findOne({ username: req.body.username }, (err, userResult) => {
+
+        if (userResult) {
+            // send back a string so we can validate the user
+            res.send('username exists');
+        } else {
+            const hash = bcrypt.hashSync(req.body.password); // Encrypt User Password
+            const user = new User({
+                _id: new mongoose.Types.ObjectId,
+                username: req.body.username,
+                password: hash,
+                profile_img_url: req.body.profile_img_url
+            });
+
+            user.save().then(result => { // Save to database and notify userResult
+                res.send(result);
+            }).catch(err => res.send(err));
+        } // Else
+    })
+}) // End of Create Account
+
+
+// USER REGISTER -----------------------------------------------------------------------------
+
+app.post('/loginUser', (req, res) => {
+    // firstly look for a user with that username
+    User.findOne({ username: req.body.username }, (err, userResult) => {
+        if (userResult) {
+            if (bcrypt.compareSync(req.body.password, userResult.password)) {
+                res.send(userResult);
+            } else {
+                res.send('not authorised');
+            } // inner if
+        } else {
+            res.send('user not found');
+        } // outer if
+    }) // Find one ends
+}); // end of post login
+
